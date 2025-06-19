@@ -1,43 +1,32 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { Configuration, OpenAIApi } = require('openai');
 
-require('dotenv').config();
 
-const app = express();
-const port = process.env.PORT || 5000;
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html"
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
 
-app.use(cors());
-app.use(bodyParser.json());
 
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+function App() {
+  return (
+    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
+          <div className="max-w-md mx-auto">
+            <div className="divide-y divide-gray-200">
+              <h1 className="text-3xl font-bold text-gray-900">Text to Image Generator</h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-app.post('/generate-image', async (req, res) => {
-  const { prompt } = req.body;
-
-  if (!prompt) {
-    return res.status(400).json({ error: 'Prompt is required' });
-  }
-
-  try {
-    const response = await openai.createImage({
-      prompt,
-      n: 1,
-      size: '512x512',
-    });
-
-    const imageUrl = response.data.data[0].url;
-    res.json({ imageUrl });
-  } catch (error) {
-    console.error('Error generating image:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Failed to generate image' });
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+export default App;
