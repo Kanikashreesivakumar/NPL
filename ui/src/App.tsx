@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/navbar';
 import Gallery from './components/Gallery';
 import About from './components/About';
+import Profile from './components/profile';
 import ImageGenerator from './components/ImageGenerator';
 import './App.css';
 
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<ImageGenerator />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/about" element={<About />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </Router>

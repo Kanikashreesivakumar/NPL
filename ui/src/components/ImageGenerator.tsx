@@ -23,9 +23,9 @@ const ImageGenerator: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-24"> 
-      <div className="glass-card p-16 backdrop-blur-lg bg-white/10 rounded-2xl shadow-2xl"> 
-        <h1 className="text-4xl font-bold text-center mb-16 text-black"> 
+    <div className="max-w-5xl mx-auto px-8 py-36"> 
+      <div className="glass-card p-20 backdrop-blur-lg bg-white/10 rounded-2xl shadow-2xl"> 
+        <h1 className="text-4xl font-bold text-center mb-16 text-black">
           Transform Your Ideas Into Images
         </h1>
         

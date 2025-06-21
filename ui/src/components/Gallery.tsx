@@ -45,7 +45,7 @@ const Gallery: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-20 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-28 px-4">
       <div className="container mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-white">Image History</h1>
