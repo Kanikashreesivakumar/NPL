@@ -1,6 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-gray-900 to-gray-800 text-white;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale; 
+  }
+}
+
+@layer components {
+  .nlp-title {
+    @apply font-['Space_Grotesk'] text-6xl font-bold bg-clip-text text-transparent 
+    bg-gradient-to-r from-blue-400 to-purple-600 tracking-tight
+    hover:scale-105 transition-transform duration-300 ease-out;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-md bg-white/10 rounded-2xl border border-white/20 
+    shadow-xl hover:shadow-2xl transition-all duration-300;
+  }
+
+  .button-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 
+    rounded-lg font-semibold transition-all duration-300
+    hover:scale-105 active:scale-95 hover:shadow-lg
+    border border-white/20;
+  }
+}
 
 body {
   margin: 0;

@@ -1,14 +1,25 @@
 import React from 'react';
 
 const Navbar: React.FC = () => (
-  <nav className="bg-white shadow p-4 mb-8">
+  <nav className="bg-gradient-to-r from-gray-900 to-gray-800 shadow-lg p-4">
     <div className="container mx-auto flex items-center justify-between">
-      <span className="text-xl font-bold">Text to Image Generator</span>
+      <div className="flex items-center space-x-2">
+        <span className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 hover:scale-105 transition-transform duration-300 font-['Space_Grotesk']">
+          NLP
+        </span>
+        <span className="text-sm text-gray-400 ml-4">Text to Image Generator</span>
+      </div>
       <div className="flex space-x-4">
-        <button onClick={() => window.location.href = '/gallery'} className="px-4 py-2 text-gray-700 hover:text-indigo-600">
+        <button 
+          onClick={() => window.location.href = '/gallery'} 
+          className="px-4 py-2 text-gray-300 hover:text-white transition-colors duration-300"
+        >
           Gallery
         </button>
-        <button onClick={() => window.location.href = '/about'} className="px-4 py-2 text-gray-700 hover:text-indigo-600">
+        <button 
+          onClick={() => window.location.href = '/about'} 
+          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white hover:opacity-90 transition-opacity duration-300"
+        >
           About
         </button>
       </div>
