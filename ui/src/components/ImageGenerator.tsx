@@ -1,79 +1,70 @@
 import React, { useState } from 'react';
+import { generateImage } from '../services/api';
 
 const ImageGenerator: React.FC = () => {
   const [prompt, setPrompt] = useState('');
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+    setError(null);
+
     try {
-      // API call simulation
-      setTimeout(() => {
-        setGeneratedImage('https://placeholder.com/400');
-        setLoading(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Error generating image:', error);
+      const result = await generateImage(prompt);
+      setGeneratedImage(`data:image/png;base64,${result.image}`);
+    } catch (err) {
+      setError('Failed to generate image');
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-16">
-      <div className="glass-card p-12 backdrop-blur-lg bg-white/10 rounded-2xl shadow-2xl">
-        <h1 className="text-4xl font-bold text-center mb-12 text-black">
+      <div className="glass-card p-12 backdrop-blur-lg bg-white/10 rou
+      nded-2xl shadow-2xl">
+        <h1 className="text-4xl font-bold text-center mb-12 text-white">
           Transform Your Ideas Into Images
         </h1>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            
-            <label htmlFor="prompt" className="block text-sm font-medium text-gray-700 mb-2">
-              Describe your image
-            </label>
-            <textarea
-              id="prompt"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="A serene landscape with mountains..."
-            />
-          </div>
-
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            className="w-full p-4 bg-white/5 border border-white/10 rounded-lg text-white"
+            placeholder="Describe your image..."
+            rows={4}
+          />
+          
           <button
             type="submit"
             disabled={loading || !prompt}
-            className={`w-full py-3 px-6 rounded-lg text-white font-medium
-              ${loading || !prompt 
-                ? 'bg-indigo-400 cursor-not-allowed' 
-                : 'bg-indigo-600 hover:bg-indigo-700 transition-colors'}
-            `}
+            className={`w-full py-4 rounded-lg font-semibold ${
+              loading || !prompt 
+                ? 'bg-gray-500 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90'
+            }`}
           >
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Generating...
-              </div>
-            ) : (
-              'Generate Image'
-            )}
+            {loading ? 'Generating...' : 'Generate Image'}
           </button>
         </form>
 
+        {error && (
+          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400">
+            {error}
+          </div>
+        )}
+
         {generatedImage && (
           <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Generated Image</h2>
-            <div className="rounded-lg overflow-hidden shadow-lg">
-              <img
-                src={generatedImage}
-                alt="Generated content"
-                className="w-full h-auto"
-              />
-            </div>
+            <img 
+              src={generatedImage} 
+              alt="Generated" 
+              className="w-full rounded-lg shadow-xl"
+            />
           </div>
         )}
       </div>
