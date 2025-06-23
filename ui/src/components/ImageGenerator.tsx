@@ -14,9 +14,13 @@ const ImageGenerator: React.FC = () => {
 
     try {
       const result = await generateImage(prompt);
-      setGeneratedImage(`data:image/png;base64,${result.image}`);
+      if (result.status === 'success' && result.image) {
+        setGeneratedImage(`data:image/png;base64,${result.image}`);
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err) {
-      setError('Failed to generate image');
+      setError('Failed to generate image. Please try again.');
     } finally {
       setLoading(false);
     }
