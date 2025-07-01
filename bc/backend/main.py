@@ -3,14 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import torch
 from diffusers import FluxPipeline
-from transformers import AutoTokenizer
 from io import BytesIO
 import base64
 from PIL import Image
 import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
@@ -24,7 +21,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Define request model
 class ImageRequest(BaseModel):
     prompt: str
     height: int = 1024
@@ -37,7 +33,7 @@ try:
     logger.info("Loading FLUX model...")
     pipe = FluxPipeline.from_pretrained(
         "black-forest-labs/FLUX.1-dev",
-        torch_dtype=torch.float32  # Changed from bfloat16 for better compatibility
+        torch_dtype=torch.float32
     )
     pipe.enable_model_cpu_offload()
     logger.info("Model loaded successfully")
@@ -45,10 +41,14 @@ except Exception as e:
     logger.error(f"Error initializing model: {e}")
     raise
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "model_loaded": pipe is not None}
+
 @app.post("/api/generate")
 async def generate_image(request: ImageRequest):
     try:
-        # Generate image
+        logger.info(f"Generating image for prompt: {request.prompt}")
         image = pipe(
             request.prompt,
             height=request.height,
@@ -59,7 +59,6 @@ async def generate_image(request: ImageRequest):
             generator=torch.Generator("cpu").manual_seed(0)
         ).images[0]
         
-        # Convert to base64
         buffered = BytesIO()
         image.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
@@ -70,8 +69,5 @@ async def generate_image(request: ImageRequest):
             "prompt": request.prompt
         }
     except Exception as e:
+        logger.error(f"Error generating image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
