@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from database_setup import ChatHistory
 
@@ -30,4 +30,21 @@ async def get_chat_history(db: Session, skip: int = 0, limit: int = 10):
                  .all()
     except Exception as e:
         logger.error(f"Error fetching chat history: {e}")
+        raise
+
+async def cleanup_old_records(db: Session, days: int = 30):
+    try:
+        threshold = datetime.utcnow() - timedelta(days=days)
+        old_records = db.query(ChatHistory)\
+                       .filter(ChatHistory.created_at < threshold)\
+                       .all()
+        
+        for record in old_records:
+            db.delete(record)
+        
+        db.commit()
+        logger.info(f"Cleaned up {len(old_records)} old records")
+    except Exception as e:
+        logger.error(f"Error cleaning up old records: {e}")
+        db.rollback()
         raise
