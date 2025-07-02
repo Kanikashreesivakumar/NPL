@@ -10,8 +10,10 @@ import logging
 from sqlalchemy.orm import Session
 from datetime import datetime
 import os
+from dotenv import load_dotenv
 
-from database import SessionLocal, init_db, ChatHistory
+from database_setup import get_db
+from database_operations import create_chat_record, get_chat_history
 
 logger = logging.getLogger(__name__)
 
@@ -33,23 +35,17 @@ class ImageRequest(BaseModel):
     guidance_scale: float = 3.5
     num_inference_steps: int = 50
 
-# Initialize database
-init_db()
-
-# Dependency to get database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Load environment variables
+load_dotenv()
+token = os.getenv("HUGGINGFACE_TOKEN")
 
 # Initialize model
 try:
     logger.info("Loading FLUX model...")
     pipe = FluxPipeline.from_pretrained(
         "black-forest-labs/FLUX.1-dev",
-        torch_dtype=torch.float32
+        torch_dtype=torch.float32,
+        use_auth_token=token  # Add authentication token
     )
     pipe.enable_model_cpu_offload()
     logger.info("Model loaded successfully")
@@ -81,20 +77,12 @@ async def generate_image(request: ImageRequest, db: Session = Depends(get_db)):
         image.save(image_filename)
         
         # Store in database
-        db_record = ChatHistory(
-            prompt=request.prompt,
-            image_path=image_filename
-        )
-        db.add(db_record)
-        db.commit()
+        await create_chat_record(db, request.prompt, image_filename)
         
         # Convert to base64 for response
         buffered = BytesIO()
         image.save(buffered, format="PNG")
         img_str = base64.b64encode(buffered.getvalue()).decode()
-        
-        # Cleanup old records
-        await ChatHistory.cleanup_old_records(db)
         
         return {
             "status": "success",
@@ -106,11 +94,13 @@ async def generate_image(request: ImageRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/history")
-async def get_history(db: Session = Depends(get_db)):
-    history = db.query(ChatHistory).order_by(ChatHistory.created_at.desc()).all()
-    return [{
-        "id": record.id,
-        "prompt": record.prompt,
-        "created_at": record.created_at,
-        "image_path": record.image_path
-    } for record in history]
+async def get_history(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    try:
+        history = await get_chat_history(db, skip, limit)
+        return [{"id": record.id, 
+                 "prompt": record.prompt,
+                 "created_at": record.created_at,
+                 "image_path": record.image_path} for record in history]
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

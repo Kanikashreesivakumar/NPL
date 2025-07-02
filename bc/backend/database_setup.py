@@ -5,15 +5,12 @@ from datetime import datetime
 import os
 import logging
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Database configuration
 DATABASE_NAME = "chat_history.db"
 DATABASE_URL = f"sqlite:///./{DATABASE_NAME}"
 
-# Create base class for declarative models
 Base = declarative_base()
 
 class ChatHistory(Base):
