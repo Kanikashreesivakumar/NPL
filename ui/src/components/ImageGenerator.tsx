@@ -32,7 +32,7 @@ const ImageGenerator: React.FC = () => {
     return (
         <div className="max-w-5xl mx-auto px-8 py-36">
             <div className="glass-card p-20 backdrop-blur-lg bg-white/10 rounded-2xl shadow-2xl">
-                <h1 className="text-4xl font-bold text-center mb-16 text-white">
+                <h1 className="text-4xl font-bold text-center mb-16 heading-text">
                     Transform Your Ideas Into Images
                 </h1>
 
@@ -40,7 +40,7 @@ const ImageGenerator: React.FC = () => {
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        className="w-full p-4 bg-white/5 border border-white/10 rounded-lg text-white"
+                        className="w-full p-4 bg-white/5 border border-white/10 rounded-lg input-text"
                         placeholder="Describe your image..."
                         rows={4}
                     />
