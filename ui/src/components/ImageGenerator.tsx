@@ -9,6 +9,8 @@ const ImageGenerator: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!prompt.trim()) return;
+
         setLoading(true);
         setError(null);
 
@@ -21,6 +23,7 @@ const ImageGenerator: React.FC = () => {
             }
         } catch (err) {
             setError('Failed to generate image. Please try again.');
+            console.error('Error:', err);
         } finally {
             setLoading(false);
         }
