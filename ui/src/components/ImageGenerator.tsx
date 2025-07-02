@@ -30,17 +30,17 @@ const ImageGenerator: React.FC = () => {
     };
 
     return (
-        <div className="max-w-5xl mx-auto px-8 py-36"> 
-            <div className="glass-card p-20 backdrop-blur-lg bg-white/10 rounded-2xl shadow-2xl"> 
-                <h1 className="text-4xl font-bold text-center mb-16 text-black">
+        <div className="max-w-5xl mx-auto px-8 py-36">
+            <div className="glass-card p-20 backdrop-blur-lg bg-white/10 rounded-2xl shadow-2xl">
+                <h1 className="text-4xl font-bold text-center mb-16 text-white">
                     Transform Your Ideas Into Images
                 </h1>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        className="w-full p-4 bg-black/5 border border-black/10 rounded-lg text-black"
+                        className="w-full p-4 bg-white/5 border border-white/10 rounded-lg text-white"
                         placeholder="Describe your image..."
                         rows={4}
                     />
@@ -50,9 +50,9 @@ const ImageGenerator: React.FC = () => {
                         disabled={loading || !prompt}
                         className={`w-full py-4 rounded-lg font-semibold ${
                             loading || !prompt 
-                                ? 'bg-blue-500  cursor-not-allowed' 
+                                ? 'bg-gray-500 cursor-not-allowed' 
                                 : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90'
-                        }`}
+                        } text-white transition-all duration-300`}
                     >
                         {loading ? 'Generating...' : 'Generate Image'}
                     </button>

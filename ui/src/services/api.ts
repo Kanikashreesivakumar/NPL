@@ -1,10 +1,17 @@
-interface ImageGenerationResponse {
+interface GenerateImageResponse {
     status: string;
     image: string;
     prompt: string;
 }
 
-export const generateImage = async (prompt: string): Promise<ImageGenerationResponse> => {
+interface HistoryResponse {
+    id: number;
+    prompt: string;
+    created_at: string;
+    image_path: string;
+}
+
+export const generateImage = async (prompt: string): Promise<GenerateImageResponse> => {
     const response = await fetch('http://localhost:8000/api/generate', {
         method: 'POST',
         headers: {
@@ -21,6 +28,16 @@ export const generateImage = async (prompt: string): Promise<ImageGenerationResp
 
     if (!response.ok) {
         throw new Error('Failed to generate image');
+    }
+
+    return response.json();
+};
+
+export const getHistory = async (skip = 0, limit = 10): Promise<HistoryResponse[]> => {
+    const response = await fetch(`http://localhost:8000/api/history?skip=${skip}&limit=${limit}`);
+    
+    if (!response.ok) {
+        throw new Error('Failed to fetch history');
     }
 
     return response.json();
