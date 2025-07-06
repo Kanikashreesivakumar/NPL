@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generateImage } from '../services/api';
+import { generateImage, checkHealth } from '../services/api';
 
 const ImageGenerator: React.FC = () => {
     const [prompt, setPrompt] = useState('');

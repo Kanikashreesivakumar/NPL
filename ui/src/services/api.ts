@@ -1,14 +1,16 @@
 interface GenerateImageResponse {
     status: string;
-    image: string;
-    prompt: string;
+    image?: string;
+    error?: string;
 }
 
-interface HistoryResponse {
-    id: number;
+interface GenerateImageRequest {
     prompt: string;
-    created_at: string;
-    image_path: string;
+    width?: number;
+    height?: number;
+    cfg_scale?: number;
+    steps?: number;
+    samples?: number;
 }
 
 export const generateImage = async (prompt: string): Promise<GenerateImageResponse> => {
@@ -19,26 +21,23 @@ export const generateImage = async (prompt: string): Promise<GenerateImageRespon
         },
         body: JSON.stringify({
             prompt,
-            height: 1024,
             width: 1024,
-            guidance_scale: 3.5,
-            num_inference_steps: 50
-        }),
+            height: 1024,
+            cfg_scale: 7.0,
+            steps: 30,
+            samples: 1
+        } as GenerateImageRequest),
     });
 
     if (!response.ok) {
-        throw new Error('Failed to generate image');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Failed to generate image');
     }
 
     return response.json();
 };
 
-export const getHistory = async (skip = 0, limit = 10): Promise<HistoryResponse[]> => {
-    const response = await fetch(`http://localhost:8000/api/history?skip=${skip}&limit=${limit}`);
-    
-    if (!response.ok) {
-        throw new Error('Failed to fetch history');
-    }
-
+export const checkHealth = async () => {
+    const response = await fetch('http://localhost:8000/health');
     return response.json();
 };
