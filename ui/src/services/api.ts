@@ -2,42 +2,74 @@ interface GenerateImageResponse {
     status: string;
     image?: string;
     error?: string;
+    prompt?: string;
 }
 
 interface GenerateImageRequest {
     prompt: string;
     width?: number;
     height?: number;
-    cfg_scale?: number;
-    steps?: number;
-    samples?: number;
+    guidance_scale?: number;
+    num_inference_steps?: number;
 }
 
 export const generateImage = async (prompt: string): Promise<GenerateImageResponse> => {
-    const response = await fetch('http://localhost:8000/api/generate', {
+    console.log('Sending request to backend:', prompt);
+    
+    const response = await fetch('http://localhost:8001/api/generate', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
             prompt,
-            width: 1024,
-            height: 1024,
-            cfg_scale: 7.0,
-            steps: 30,
-            samples: 1
+            width: 512,
+            height: 512,
+            guidance_scale: 7.5,
+            num_inference_steps: 15
         } as GenerateImageRequest),
     });
 
+    console.log('Response status:', response.status);
+
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
         throw new Error(errorData.detail || 'Failed to generate image');
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('Success response:', result.status);
+    return result;
 };
 
 export const checkHealth = async () => {
-    const response = await fetch('http://localhost:8000/health');
+    const response = await fetch('http://localhost:8001/health');
     return response.json();
+};
+
+export interface ImageHistory {
+    id: string;
+    filename: string;
+    prompt: string;
+    created_at: string;
+    url: string;
+}
+
+export const getImageHistory = async (): Promise<ImageHistory[]> => {
+    const response = await fetch('http://localhost:8001/api/history');
+    if (!response.ok) {
+        throw new Error('Failed to fetch image history');
+    }
+    const data = await response.json();
+    return data.images;
+};
+
+export const deleteImage = async (imageId: string): Promise<void> => {
+    const response = await fetch(`http://localhost:8001/api/history/${imageId}`, {
+        method: 'DELETE',
+    });
+    if (!response.ok) {
+        throw new Error('Failed to delete image');
+    }
 };

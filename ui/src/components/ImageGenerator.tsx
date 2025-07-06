@@ -15,9 +15,13 @@ const ImageGenerator: React.FC = () => {
         setError(null);
 
         try {
+            // Show warning about CPU generation time
+            console.log('⏳ Starting image generation - this may take 1-3 minutes on CPU...');
+            
             const result = await generateImage(prompt);
             if (result.status === 'success' && result.image) {
                 setGeneratedImage(`data:image/png;base64,${result.image}`);
+                console.log('✅ Image generated successfully!');
             } else {
                 throw new Error('Invalid response from server');
             }
@@ -54,7 +58,7 @@ const ImageGenerator: React.FC = () => {
                                 : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90'
                         } text-white transition-all duration-300`}
                     >
-                        {loading ? 'Generating...' : 'Generate Image'}
+                        {loading ? 'Generating... (5-10 seconds)' : 'Generate Image'}
                     </button>
                 </form>
 

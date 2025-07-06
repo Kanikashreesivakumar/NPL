@@ -1,0 +1,30 @@
+[
+  {
+    "id": "20250706_122649",
+    "filename": "image_20250706_122649.png",
+    "prompt": "generate a girl photo with tshirt printed as \"kani\"",
+    "created_at": "2025-07-06T12:26:49.019407",
+    "url": "/api/images/image_20250706_122649.png"
+  },
+  {
+    "id": "20250706_122659",
+    "filename": "image_20250706_122659.png",
+    "prompt": "generate a girl photo with tshirt printed as \"kani\"",
+    "created_at": "2025-07-06T12:26:59.104245",
+    "url": "/api/images/image_20250706_122659.png"
+  },
+  {
+    "id": "20250706_130228",
+    "filename": "image_20250706_130228.png",
+    "prompt": "generate  a picture of a girl wearing a tshirt printed as \"kani\"",
+    "created_at": "2025-07-06T13:02:28.444008",
+    "url": "/api/images/image_20250706_130228.png"
+  },
+  {
+    "id": "20250706_130237",
+    "filename": "image_20250706_130237.png",
+    "prompt": "generate  a picture of a girl wearing a tshirt printed as \"kani\"",
+    "created_at": "2025-07-06T13:02:37.676281",
+    "url": "/api/images/image_20250706_130237.png"
+  }
+]

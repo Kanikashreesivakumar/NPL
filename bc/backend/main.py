@@ -2,9 +2,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
+import base64
 import os
 from dotenv import load_dotenv
 from typing import Optional
+from fastapi.responses import FileResponse
+from datetime import datetime
+import json
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +23,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+IMAGES_DIR = "generated_images"
+HISTORY_FILE = "image_history.json"
+
+# Create directories if they don't exist
+os.makedirs(IMAGES_DIR, exist_ok=True)
+
+def load_image_history():
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, 'r') as f:
+            return json.load(f)
+    return []
+
+def save_image_history(history):
+    with open(HISTORY_FILE, 'w') as f:
+        json.dump(history, f, indent=2, default=str)
 
 class ImageRequest(BaseModel):
     prompt: str
@@ -84,7 +104,30 @@ async def generate_image(request: ImageRequest):
             # Extract the base64 image
             if "artifacts" in response_data and len(response_data["artifacts"]) > 0:
                 image_base64 = response_data["artifacts"][0]["base64"]
-                return ImageResponse(status="success", image=image_base64)
+                
+                # Save image to file
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"image_{timestamp}.png"
+                filepath = os.path.join(IMAGES_DIR, filename)
+                
+                with open(filepath, "wb") as f:
+                    f.write(response.content)
+                
+                # Save to history
+                history = load_image_history()
+                image_record = {
+                    "id": timestamp,
+                    "filename": filename,
+                    "prompt": request.prompt,
+                    "created_at": datetime.now().isoformat(),
+                    "url": f"/api/images/{filename}"
+                }
+                history.append(image_record)
+                save_image_history(history)
+                
+                # Return base64 for immediate display
+                encoded_image = base64.b64encode(response.content).decode('utf-8')
+                return {"status": "success", "image": encoded_image}
             else:
                 raise HTTPException(status_code=500, detail="No image generated")
                 
@@ -93,6 +136,35 @@ async def generate_image(request: ImageRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+@app.get("/api/history")
+async def get_image_history():
+    history = load_image_history()
+    return {"images": history}
+
+@app.get("/api/images/{filename}")
+async def get_image(filename: str):
+    filepath = os.path.join(IMAGES_DIR, filename)
+    if os.path.exists(filepath):
+        return FileResponse(filepath)
+    raise HTTPException(status_code=404, detail="Image not found")
+
+@app.delete("/api/history/{image_id}")
+async def delete_image(image_id: str):
+    history = load_image_history()
+    image_to_delete = None
+    
+    for i, img in enumerate(history):
+        if img["id"] == image_id:
+            image_to_delete = history.pop(i)
+            break
+    
+    if image_to_delete:
+        # Delete physical file
+        filepath = os.path.join(IMAGES_DIR, image_to_delete["filename"])
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        
+        save_image_history(history)
+        return {"status": "success", "message": "Image deleted"}
+    
+    raise HTTPException(status_code=404, detail="Image not found")
