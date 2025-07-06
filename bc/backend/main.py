@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import torch
-from diffusers import FluxPipeline
+from diffusers import StableDiffusionPipeline
 from io import BytesIO
 import base64
 from PIL import Image
@@ -30,25 +30,25 @@ app.add_middleware(
 
 class ImageRequest(BaseModel):
     prompt: str
-    height: int = 1024
-    width: int = 1024
-    guidance_scale: float = 3.5
+    height: int = 512
+    width: int = 512
+    guidance_scale: float = 7.5
     num_inference_steps: int = 50
 
 # Load environment variables
 load_dotenv()
-token = os.getenv("HUGGINGFACE_TOKEN")
 
-# Initialize model
+# Initialize Stable Diffusion model
 try:
-    logger.info("Loading FLUX model...")
-    pipe = FluxPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-dev",
-        torch_dtype=torch.float32,
-        use_auth_token=token  # Add authentication token
+    logger.info("Loading Stable Diffusion model...")
+    pipe = StableDiffusionPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5",
+        torch_dtype=torch.float16,
+        safety_checker=None,
+        requires_safety_checker=False
     )
     pipe.enable_model_cpu_offload()
-    logger.info("Model loaded successfully")
+    logger.info("Stable Diffusion model loaded successfully")
 except Exception as e:
     logger.error(f"Error initializing model: {e}")
     raise
@@ -64,13 +64,15 @@ async def health_check():
 async def generate_image(request: ImageRequest, db: Session = Depends(get_db)):
     try:
         logger.info(f"Generating image for prompt: {request.prompt}")
-        # Generate image
+        
+        # Generate image with Stable Diffusion
         image = pipe(
-            request.prompt,
+            prompt=request.prompt,
             height=request.height,
             width=request.width,
             guidance_scale=request.guidance_scale,
-            num_inference_steps=request.num_inference_steps
+            num_inference_steps=request.num_inference_steps,
+            generator=torch.Generator().manual_seed(42)
         ).images[0]
         
         # Save image to disk
@@ -92,18 +94,26 @@ async def generate_image(request: ImageRequest, db: Session = Depends(get_db)):
             "prompt": request.prompt
         }
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Error generating image: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/history")
-async def get_history(
-    skip: int = 0, 
-    limit: int = 10, 
-    db: Session = Depends(get_db)
-):
+async def get_history(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     try:
         history = await get_chat_history(db, skip, limit)
-        return history
+        return [
+            {
+                "id": record.id,
+                "prompt": record.prompt,
+                "created_at": record.created_at.isoformat(),
+                "image_path": record.image_path
+            }
+            for record in history
+        ]
     except Exception as e:
-        logger.error(f"Error: {e}")
+        logger.error(f"Error fetching history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

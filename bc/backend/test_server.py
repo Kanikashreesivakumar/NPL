@@ -7,7 +7,7 @@ from io import BytesIO
 import base64
 from PIL import Image
 
-# Define request model
+
 class ImageRequest(BaseModel):
     prompt: str
     height: int = 1024
