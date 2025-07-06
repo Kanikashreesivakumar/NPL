@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import { generateImage, checkHealth } from '../services/api';
 
+export interface GenerateImageResponse {
+    status: string;
+    image?: string;
+    image_id?: string;
+}
+
 const ImageGenerator: React.FC = () => {
     const [prompt, setPrompt] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -13,15 +20,19 @@ const ImageGenerator: React.FC = () => {
 
         setLoading(true);
         setError(null);
+        setSuccessMessage(null);
 
         try {
-            // Show warning about CPU generation time
-            console.log('⏳ Starting image generation - this may take 1-3 minutes on CPU...');
+            console.log('🚀 Starting fast image generation...');
             
             const result = await generateImage(prompt);
             if (result.status === 'success' && result.image) {
                 setGeneratedImage(`data:image/png;base64,${result.image}`);
-                console.log('✅ Image generated successfully!');
+                setSuccessMessage(`✅ Image generated and saved to gallery! ()`);
+                console.log('✅ Image generated and saved to database!');
+                
+                // Clear the prompt for next generation
+                setPrompt('');
             } else {
                 throw new Error('Invalid response from server');
             }
@@ -58,7 +69,7 @@ const ImageGenerator: React.FC = () => {
                                 : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90'
                         } text-white transition-all duration-300`}
                     >
-                        {loading ? 'Generating... (5-10 seconds)' : 'Generate Image'}
+                        {loading ? 'Generating...' : 'Generate & Save to Gallery'}
                     </button>
                 </form>
 
@@ -68,13 +79,23 @@ const ImageGenerator: React.FC = () => {
                     </div>
                 )}
 
+                {successMessage && (
+                    <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400">
+                        {successMessage}
+                    </div>
+                )}
+
                 {generatedImage && (
                     <div className="mt-8">
+                        <h3 className="text-xl font-semibold text-white mb-4">Generated Image:</h3>
                         <img 
                             src={generatedImage} 
                             alt="Generated" 
                             className="w-full rounded-lg shadow-xl"
                         />
+                        <p className="text-center text-gray-300 mt-4">
+                            🎉 Image saved to gallery! Check the Gallery page to see all your creations.
+                        </p>
                     </div>
                 )}
             </div>
