@@ -11,6 +11,10 @@ from datetime import datetime
 from PIL import Image
 import requests
 import time
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI()
 
@@ -22,18 +26,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create directories and database
+# Get configuration from environment variables
+PORT = int(os.getenv('PORT', 8001))
+HOST = os.getenv('HOST', '0.0.0.0')
+DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./image_gallery.db')
+CLEANUP_DAYS = int(os.getenv('CLEANUP_DAYS', 30))
+
+# Extract database path from URL
+DATABASE_PATH = DATABASE_URL.replace('sqlite:///', '').replace('sqlite:', '')
 IMAGES_DIR = "generated_images"
 os.makedirs(IMAGES_DIR, exist_ok=True)
+
+print(f"🔧 Configuration:")
+print(f"   Database: {DATABASE_PATH}")
+print(f"   Port: {PORT}")
+print(f"   Images Directory: {IMAGES_DIR}")
 
 class GenerateImageRequest(BaseModel):
     prompt: str
     width: int = 512
     height: int = 512
 
+def get_db_connection():
+    """Get database connection"""
+    return sqlite3.connect(DATABASE_PATH)
+
 def init_database():
     """Initialize SQLite database for storing image metadata"""
-    conn = sqlite3.connect('image_gallery.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -50,10 +70,11 @@ def init_database():
     
     conn.commit()
     conn.close()
+    print(f"✅ Database initialized: {DATABASE_PATH}")
 
 def save_image_to_db(filename, prompt, file_size, width, height):
     """Save image metadata to database"""
-    conn = sqlite3.connect('image_gallery.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -64,11 +85,12 @@ def save_image_to_db(filename, prompt, file_size, width, height):
     conn.commit()
     image_id = cursor.lastrowid
     conn.close()
+    print(f"💾 Image saved to database with ID: {image_id}")
     return image_id
 
 def get_images_from_db():
     """Get all images from database"""
-    conn = sqlite3.connect('image_gallery.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -91,11 +113,12 @@ def get_images_from_db():
         })
     
     conn.close()
+    print(f"📸 Retrieved {len(images)} images from database")
     return images
 
 def delete_image_from_db(image_id):
     """Delete image from database and file system"""
-    conn = sqlite3.connect('image_gallery.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # Get filename before deleting
@@ -113,8 +136,10 @@ def delete_image_from_db(image_id):
         # Delete physical file
         if os.path.exists(filepath):
             os.remove(filepath)
+            print(f"🗑️ Deleted file: {filepath}")
         
         conn.close()
+        print(f"🗑️ Deleted image with ID: {image_id}")
         return True
     
     conn.close()
@@ -123,15 +148,45 @@ def delete_image_from_db(image_id):
 @app.on_event("startup")
 async def startup_event():
     init_database()
-    print("✅ Database initialized successfully!")
+    # Test database connection
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) FROM images')
+        count = cursor.fetchone()[0]
+        conn.close()
+        print(f"📊 Database connected successfully! Found {count} existing images.")
+    except Exception as e:
+        print(f"❌ Database connection failed: {e}")
 
 @app.get("/")
 def read_root():
-    return {"message": "Image Generator API with Database Storage"}
+    return {
+        "message": "Image Generator API with SQLite Database",
+        "database": DATABASE_PATH,
+        "port": PORT
+    }
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "database": "connected"}
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) FROM images')
+        count = cursor.fetchone()[0]
+        conn.close()
+        return {
+            "status": "ok", 
+            "database": "connected",
+            "database_path": DATABASE_PATH,
+            "total_images": count
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "database": "disconnected",
+            "error": str(e)
+        }
 
 @app.post("/api/generate")
 async def generate_image(request: GenerateImageRequest):
@@ -168,7 +223,6 @@ async def generate_image(request: GenerateImageRequest):
             
             generation_time = time.time() - start_time
             print(f"⚡ Generated and saved in {generation_time:.2f} seconds!")
-            print(f"💾 Saved to database with ID: {image_id}")
             
             # Convert to base64 for immediate display
             img_base64 = base64.b64encode(response.content).decode()
@@ -192,7 +246,6 @@ async def get_image_history():
     """Get all images from database"""
     try:
         images = get_images_from_db()
-        print(f"📸 Returning {len(images)} images from database")
         return {"images": images}
     except Exception as e:
         print(f"Error fetching history: {e}")
@@ -224,7 +277,7 @@ async def delete_image(image_id: str):
 @app.get("/api/stats")
 async def get_stats():
     """Get gallery statistics"""
-    conn = sqlite3.connect('image_gallery.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute('SELECT COUNT(*) FROM images')
@@ -237,8 +290,10 @@ async def get_stats():
     
     return {
         "total_images": total_images,
-        "total_size_mb": round(total_size / (1024 * 1024), 2)
+        "total_size_mb": round(total_size / (1024 * 1024), 2),
+        "database_path": DATABASE_PATH
     }
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001, reload=False)
+    print(f"🚀 Starting server on {HOST}:{PORT}")
+    uvicorn.run(app, host=HOST, port=PORT, reload=False)
