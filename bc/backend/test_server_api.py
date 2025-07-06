@@ -50,5 +50,22 @@ async def generate_image(request: dict):
 def health():
     return {"status": "ok", "model_loaded": True}
 
+@app.get("/test-api")
+async def test_stability_api():
+    """Test Stability AI API connection"""
+    try:
+        url = "https://api.stability.ai/v1/engines/list"
+        headers = {
+            "Authorization": f"Bearer {STABILITY_API_KEY}"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            return {"status": "success", "message": "Stability AI API is working"}
+        else:
+            return {"status": "error", "message": f"API returned {response.status_code}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 if __name__ == "__main__":
     uvicorn.run("test_server_api:app", host="0.0.0.0", port=8001, reload=False)
