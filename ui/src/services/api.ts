@@ -3,15 +3,15 @@ interface GenerateImageResponse {
     image?: string;
     error?: string;
     prompt?: string;
-    image_id?: string;  // Add this new field
-    filename?: string;  // Add this new field
+    image_id?: string;
+    filename?: string;
+    expires_in_days?: number;
 }
 
 interface GenerateImageRequest {
     prompt: string;
     width?: number;
     height?: number;
-    // Remove guidance_scale and num_inference_steps as they're not needed for the database version
 }
 
 export const generateImage = async (prompt: string): Promise<GenerateImageResponse> => {
@@ -53,31 +53,39 @@ export interface ImageHistory {
     prompt: string;
     created_at: string;
     url: string;
-    file_size?: number;  // Add these new fields from database
+    file_size?: number;
     width?: number;
     height?: number;
+    days_ago?: number;
+    expires_in_days?: number;
 }
 
 export const getImageHistory = async (): Promise<ImageHistory[]> => {
-    const response = await fetch('http://localhost:8001/api/history');
+    const response = await fetch('http://localhost:8001/api/gallery');
     if (!response.ok) {
-        throw new Error('Failed to fetch image history');
+        throw new Error('Failed to fetch gallery');
     }
     const data = await response.json();
     return data.images;
 };
 
 export const deleteImage = async (imageId: string): Promise<void> => {
-    const response = await fetch(`http://localhost:8001/api/history/${imageId}`, {
+    const response = await fetch(`http://localhost:8001/api/gallery/${imageId}`, {
         method: 'DELETE',
     });
     if (!response.ok) {
-        throw new Error('Failed to delete image');
+        throw new Error('Failed to delete from gallery');
     }
 };
 
-// Add new function to get stats
 export const getGalleryStats = async () => {
     const response = await fetch('http://localhost:8001/api/stats');
+    return response.json();
+};
+
+export const triggerCleanup = async () => {
+    const response = await fetch('http://localhost:8001/api/cleanup', {
+        method: 'POST'
+    });
     return response.json();
 };

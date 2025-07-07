@@ -354,3 +354,9 @@ async def get_stats():
 if __name__ == "__main__":
     print(f"🚀 Starting server on {HOST}:{PORT}")
     uvicorn.run(app, host=HOST, port=PORT, reload=False)
+
+
+
+
+
+
