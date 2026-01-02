@@ -198,6 +198,9 @@ def delete_image_from_db(image_id):
 
 def generate_with_stability_ai(prompt: str, width: int, height: int):
     """Generate image using Stability AI API"""
+    if not STABILITY_API_KEY:
+        raise Exception("Stability AI API key not configured")
+    
     url = "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image"
     
     headers = {
