@@ -193,9 +193,7 @@ def delete_image_from_db(image_id):
         print(f"🗑️ Deleted image with ID: {image_id}")
         return True
     
-    conn.close()
-    return False
-
+    c
 def generate_with_stability_ai(prompt: str, width: int, height: int):
     """Generate image using Stability AI API"""
     if not STABILITY_API_KEY:
